@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ru" >
+  <head>
+    <title>Unicode in Python</title>
+    <meta name="description" content="">
+    <meta name="author" content="Andrew Svetlov">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/custom.css" id="theme">
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/custom.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+     var link = document.createElement( 'link' );
+     link.rel = 'stylesheet';
+     link.type = 'text/css';
+     link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+     document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+
+    <!--[if lt IE 9]>
+      <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Unicode in Python</h1>
+          <p>
+            Andrew Svetlov
+            <p>
+              <small>@andrew_svetlov</small><br>
+              <small>andrew.svetlov@gmail.com</small><br>
+              <small>https://asvetlov.github.io/pycon-minsk-2018/</small>
+            </p>
+          </p>
+        </section>
+        <section>
+          <h2>Bio</h2>
+          <ul>
+            <li>Work on Ocean S.A.
+              (<a href="https://ocean.io/">https://ocean.io/</a>)</li>
+            <li>aio-libs, aiohttp etc.</li>
+            <li>Python Core Developer</li>
+          </ul>
+        </section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>ASCII</h1>
+	    <img src="dynasaur.jpg"/>
+	  </section>
+	  <section>
+	    <h2>ASCII age</h2>
+	    <ul>
+	      <li>Every symbol takes 7 bit</li>
+	      <li>Ord > 127 for national encodings</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>Russian codecs</h2>
+	    <ul>
+	      <li>Windows 1251</li>
+	      <li>KOI8-R</li>
+	      <li>IBM 855</li>
+	      <li>IBM 866</li>
+	      <li>Mac Cyrillic</li>
+	      <li>ISO 8859-5</li>
+	    </ul>
+	    <p>Codecs are <b>not compatible</b></p>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>Unicode</h1>
+	    <img src="unirobo.png"/>
+	  </section>
+	  <section>
+	    <ul>
+	      <li>Character → Code Point</li>
+	      <li>1,114,112 code points</li>
+	      <li>136,755 characters</li>
+	      <li>139 modern and historic scripts</li>
+	      <li>Hieroglyphs</li>
+	      <li>Ideographics</li>
+	      <li>Emojis</li>
+	      <li>etc.</li>
+	    </ul>
+	    <p>Not a <b>binary representation</b></p>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>Codecs</h1>
+	    <img src="encoding.jpeg"/>
+	  </section>
+	  <section>
+	    <h2>Codecs and Unicode</h2>
+	    <p>UTF is <i>Unicode Transformation Format</i></p>
+	    <ul>
+	      <li>Unicode (str) → Code Points in memory</li>
+	      <li>UTF (bytes) → for serialization</li>
+	      <li>files / network / database</li>
+	      <li>All other codecs are bytish too</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>UTF</h2>
+	    <ul>
+	      <li>UTF-8</li>
+	      <li>UTF-16-LE</li>
+	      <li>UTF-16-BE</li>
+	      <li>UTF-32-LE</li>
+	      <li>UTF-32-BE</li>
+	      <li>+BOM</li>
+	    </ul>
+	    <p><b>Universal?</b> Really?
+	      <span style="font-size: 300%"> ☠ </span>
+	      WTF?
+	    </p>
+	  </section>
+	  <section>
+	    <h2>UTF-8</h2>
+	    <ul>
+	      <li><b>1-4</b> bytes per code point</li>
+	      <li>Can encode everything</li>
+	      <li><b>[\u0000-\u007F]</b> 0bbb_bbbb</li>
+	      <li><b>[\u0080-\u07FF]</b> 110b_bbbb+10bb_bbbb</li>
+	      <li><b>[\u0800-\uFFFF]</b> 1110_bbbb+10bb_bbbb*2</li>
+	      <li><b>[\U00010000-\U00010FFFF]</b> 1111_0bb+10bb_bbbb*3</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>UTF-32</h2>
+	    <ul>
+	      <li>4 bytes per code point</li>
+	      <li>Little Endian (UTF-32-LE) → B1 B2 B3 B4</li>
+	      <li>Big Endian (UTF-32-BE) → B4 B3 B2 B1</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>UTF-16</h2>
+	    <ul>
+	      <li>2 or 4 bytes per code point</li>
+	      <li>Gory inheritage</li>
+	      <li>Surrogate pairs:</li>
+	      <li>D800-DBFF + DC00-DFFF</li>
+	    </ul>
+	    <p><b>U+1F872</b> (🡲) to UTF-16 → <b>D83E + DC72</b></p>
+	    <pre><code>
+off = ord(ch) - 0x10000
+high = (off // 0x400) + 0xD800
+low = (off % 0x400) + 0xDC00
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>BOM</h2>
+	    <h3>Byte order mark</h3>
+	    <p>A magic number at the start of text</p>
+	    <ul>
+	      <li>EF BB BF → UTF-8</li>
+	      <li>FE FF → UTF-16-BE</li>
+	      <li>FF FE → UTF-16-LE</li>
+	      <li>00 00 FE FF → UTF-32-BE</li>
+	      <li>FF FE 00 00 → UTF-32-LE</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>Error modes</h2>
+	    <p><code>b.decode('utf-8', errors='strict')</code></p>
+	    <p>Modes:
+	      <ul>
+		<li>strict</li>
+		<li>ignore</li>
+		<li>replace</li>
+		<li>backslashreplace</li>
+		<li>...</li>
+	      </ul>
+	    </p>
+	    <p>
+	      <small>https://docs.python.org/3/library/codecs.html#codec-base-classes</small>
+	    </p>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>Composites</h1>
+	    <img src="composition.jpg" width="70%" />
+	  </section>
+	  <section>
+	    <h2>Trick</h2>
+	    <pre><code>
+>>> s1 = "Löwe"
+>>> s2 = "Löwe"
+>>> s1 == s2  # ???
+	    </code></pre>
+	    <pre class="fragment"><code>
+>>> "Löwe" == "Löwe"
+False
+>>> len(s1)
+4
+>>> len(s2)
+5
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>Digging in</h2>
+	    <pre><code>
+ö → 1 codepoint, 'ö'(\u00f6)
+	    </code></pre>
+	    vs
+	    <pre><code>
+ö → 2 code points, 'o'(\u006f) + '̈'(\u0308)
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>Normalization</h2>
+	    <p>unicodedata.normalize(form, s)</p>
+	    <ul>
+	      <li>NFC (Composed)</li>
+	      <li>NFKC</li>
+	      <li>NFD (Decomposed)</li>
+	      <li>NFKD</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <pre><code>
+>>> import unicodedata
+>>> len(unicodedata.normalize('NFKC', "Löwe"))
+4
+>>> len(unicodedata.normalize('NFKD', "Löwe"))
+5
+	    </code></pre>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>Categories</h1>
+	  </section>
+	  <section>
+	    <h2>Category</h2>
+	    <pre><code>
+>>> unicodedata.category(' ')
+'Zs'   # (Z)separator (s)pace
+>>> unicodedata.category('1')
+'Nd'   # (N)umeric (d)igit
+>>> unicoded2ata.category('A')
+'Lu'   # (L)etter (u)ppercased
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>Code Point Names</h2>
+	    <pre><code>
+>>> unicodedata.name(' ')
+'SPACE'
+>>> unicodedata.name('A')
+'LATIN CAPITAL LETTER A'
+>>> '\N{SPACE}'
+' '
+>>> '\N{LATIN CAPITAL LETTER A}'
+'A'
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>Funny numbers</h2>
+	    <pre><code>
+>>> sum(unicodedata.category(chr(i)) == 'Zs'
+...     for i in range(sys.maxunicode))
+17
+>>> sum(unicodedata.category(chr(i)).startswith('P')
+...     for i in range(sys.maxunicode))
+748
+	    </code></pre>
+	    <pre class="python"><code>s.split(' ,.;&!*')</code></pre>
+	  </section>
+	  <section>
+	    <h2>Spaces</h2>
+	    <table style="font-size: 75%">
+	      <tr>
+		<td><ul>
+		  <li>'SPACE'</li>
+		  <li>'NO-BREAK SPACE'</li>
+		  <li>'OGHAM SPACE MARK'</li>
+		  <li>'EN QUAD'</li>
+		  <li>'EM QUAD'</li>
+		  <li>'EN SPACE'</li>
+		  <li>'EM SPACE'</li>
+		  <li>'THREE-PER-EM SPACE'</li>
+		  <li>'FOUR-PER-EM SPACE'</li>
+		</ul></td>
+		<td><ul>
+		  <li>'SIX-PER-EM SPACE'</li>
+		  <li>'FIGURE SPACE'</li>
+		  <li>'PUNCTUATION SPACE'</li>
+		  <li>'THIN SPACE'</li>
+		  <li>'HAIR SPACE'</li>
+		  <li>'NARROW NO-BREAK SPACE'</li>
+		  <li>'MEDIUM MATHEMATICAL SPACE'</li>
+		  <li>'IDEOGRAPHIC SPACE'</li>
+		</ul></td>
+	      </tr>
+	    </table>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>Regular expressions</h1>
+	  </section>
+	  <section>
+	    <h2>regex library</h2>
+	    <pre><code>pip install regex</code></pre>
+	    <pre><code>import regex</code></pre>
+	    <ul>
+	      <li>\p{property=value}</li>
+	      <li>\P{property=value}</li>
+	      <li>\p{value}</li>
+	      <li>\P{value}</li>
+	    </ul>
+	  </section>
+	  <section>
+	    <h2>Example</h2>
+	    <pre><code>
+>>> p = regex.compile('\p{Zs}+')
+>>> p.split('a   b  c')
+['a', 'b', 'c']
+
+>> regex.compile('[\p{Z}\p{P}]+')
+	    </code></pre>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+	<section>
+	  <section>
+	    <h1>URL encoding</h1>
+	    <img src="url.jpeg"/>
+	  </section>
+	  <section>
+	    <h2>Percent encoding</h2>
+	    <p>Encode all non-safe symbols</p>
+	    <p>'т' → '%D1%82'</p>
+	    <p>'к' → '%D0%BA'</p>
+	    <pre><code>
+>>> from yarl import URL
+>>> URL('https://wikipedia.org/текст')
+URL('https://wikipedia.org/%D1%82%D0%B5%D0%BA%D1%81%D1%82')
+	    </code></pre>
+	  </section>
+	  <section>
+	    <h2>INDA</h2>
+	    <pre><code>
+>>> URL('https://雜草工作室.香港')
+URL('https://xn--2qq421aovb6v1e3pu.xn--j6w193g')
+	    </code></pre>
+	    <ul>
+	      <li>U-Label → 雜草工作室.香港</li>
+	      <li>A-Label → xn--2qq421aovb6v1e3pu.xn--j6w193g</li>
+	    </ul>
+	  </section>
+	</section>
+        <!-- ------------------------------------------ -->
+        <section>
+          <h1>Questions?</h1>
+          <p>
+            Andrew Svetlov
+	  </p>
+          <p>
+            <small>@andrew_svetlov</small><br>
+            <small>andrew.svetlov@gmail.com</small><br>
+            <small>http://asvetlov.github.io/pycon-minsk-2018/</small>
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+     // Full list of configuration options available at:
+     // https://github.com/hakimel/reveal.js#configuration
+     Reveal.initialize({
+       controls: true,
+       progress: true,
+       history: true,
+       center: true,
+       slideNumber: true,
+       transition: 'slide', // none/fade/slide/convex/concave/zoom
+       // Optional reveal.js plugins
+       dependencies: [
+         { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+         { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+         { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+         { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+         { src: 'plugin/zoom-js/zoom.js', async: true },
+         { src: 'plugin/notes/notes.js', async: true }
+       ]
+     });
+    </script>
+
+  </body>
+</html>
